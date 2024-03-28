@@ -1,12 +1,15 @@
 import hashlib
+import inspect
+import logging
 import pickle
 from collections.abc import Callable
 from functools import wraps
-from inspect import BoundArguments, signature
 from pathlib import Path
 from typing import Any, ParamSpec, TypeVar, cast
 
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -18,29 +21,37 @@ class Cache:
     def __init__(self, base_dir: Path) -> None:
         self.base_dir = base_dir
 
-    def __call__(self, function: Callable[P, R]) -> Callable[P, R]:
-        return cached(self.base_dir, function)
+    def __call__(self, f: Callable[P, R]) -> Callable[P, R]:
+        return cached(self.base_dir, f)
 
 
-def cached(base_dir: Path, function: Callable[P, R]) -> Callable[P, R]:
-    sig = signature(function)
+def cached(base_dir: Path, f: Callable[P, R]) -> Callable[P, R]:
+    signature = inspect.signature(f)
 
-    @wraps(function)
+    @wraps(f)
     def inner(*args: P.args, **kwargs: P.kwargs) -> R:
-        function_dir = base_dir / function.__name__
-        cache_path = function_dir / digest_args(sig.bind(*args, **kwargs))
-        print(f"{cache_path=}")
+        function_dir = base_dir / f.__name__
+        cache_path = function_dir / digest_args(signature.bind(*args, **kwargs))
+        logging.debug(f"Call to {f.__name__} will use cache path: {cache_path}")
         if cache_path.exists():
-            with cache_path.open("rb") as f:
-                return cast(R, pickle.load(f))
+            return cast(R, load(cache_path))
         # Fallback to actual function and cache the result
-        result = function(*args, **kwargs)
+        result = f(*args, **kwargs)
         function_dir.mkdir(parents=True, exist_ok=True)
-        with cache_path.open("wb") as f:
-            pickle.dump(result, f)
+        dump(result, cache_path)
         return result
 
     return inner
+
+
+def load(path: Path) -> Any:
+    with path.open("rb") as f:
+        return pickle.load(f)
+
+
+def dump(result: R, path: Path) -> None:
+    with path.open("wb") as f:
+        pickle.dump(result, f)
 
 
 def arg_to_bytes(x: Any) -> bytes:
@@ -53,7 +64,7 @@ def arg_to_bytes(x: Any) -> bytes:
     return hashed.to_bytes(byte_length, signed=True, byteorder="little")
 
 
-def digest_args(binding: BoundArguments) -> str:
+def digest_args(binding: inspect.BoundArguments) -> str:
     """Lossily condense function arguments to a fixed-length string."""
     h = hashlib.sha256()
     for name, value in sorted(binding.arguments.items(), key=lambda x: x[0]):
