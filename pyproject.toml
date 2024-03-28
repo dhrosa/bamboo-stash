@@ -13,7 +13,7 @@ authors = [
 ]
 dynamic = ["version"]
 
-dependencies = []
+dependencies = ["pandas"]
 
 [tool.hatch.version]
 path = "src/bamboo_stash/__init__.py"
@@ -29,7 +29,7 @@ all = [
 ]
 
 [tool.hatch.envs.style]
-dependencies = ["setuptools", "isort", "black", "pylama", "mypy", "pytest"]
+dependencies = ["setuptools", "isort", "black", "pylama", "mypy", "pytest", "pandas-stubs"]
 
 [tool.hatch.envs.style.scripts]
 format = [
