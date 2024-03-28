@@ -2,18 +2,18 @@ from pathlib import Path
 
 from pytest import fixture
 
-from bamboo_stash import cached, init
+from bamboo_stash import Cache
 
 
-@fixture(autouse=True)
-def cache_path(tmp_path: Path) -> None:
-    init(cache_path=tmp_path / "bamboo_stash")
+@fixture
+def cache(tmp_path: Path) -> Cache:
+    return Cache(tmp_path / "bamboo_stash")
 
 
-def test_no_args() -> None:
+def test_no_args(cache: Cache) -> None:
     call_count = 0
 
-    @cached
+    @cache
     def f() -> int:
         nonlocal call_count
         call_count += 1
@@ -24,10 +24,10 @@ def test_no_args() -> None:
     assert call_count == 1
 
 
-def test_args() -> None:
+def test_args(cache: Cache) -> None:
     call_count = 0
 
-    @cached
+    @cache
     def f(a: int) -> int:
         nonlocal call_count
         call_count += 1
