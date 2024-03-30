@@ -27,10 +27,10 @@ class Cache:
 
 def cached(base_dir: Path, f: Callable[P, R]) -> Callable[P, R]:
     signature = inspect.signature(f)
+    function_dir = base_dir / f.__qualname__ / digest_function(f)
 
     @wraps(f)
     def inner(*args: P.args, **kwargs: P.kwargs) -> R:
-        function_dir = base_dir / f.__qualname__ / digest_function(f)
         cache_path = function_dir / digest_args(signature.bind(*args, **kwargs))
         logging.debug(f"Call to {f.__name__} will use cache path: {cache_path}")
         if cache_path.exists():
