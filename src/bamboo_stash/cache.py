@@ -30,7 +30,7 @@ def cached(base_dir: Path, f: Callable[P, R]) -> Callable[P, R]:
 
     @wraps(f)
     def inner(*args: P.args, **kwargs: P.kwargs) -> R:
-        function_dir = base_dir / f.__name__
+        function_dir = base_dir / f.__qualname__ / digest_function(f)
         cache_path = function_dir / digest_args(signature.bind(*args, **kwargs))
         logging.debug(f"Call to {f.__name__} will use cache path: {cache_path}")
         if cache_path.exists():
@@ -71,3 +71,8 @@ def digest_args(binding: inspect.BoundArguments) -> str:
         h.update(name.encode())
         h.update(arg_to_bytes(value))
     return h.hexdigest()
+
+
+def digest_function(f: Callable[P, R]) -> str:
+    """Lossily condense function definition into a fixed-length string."""
+    return hashlib.sha256(inspect.getsource(f).encode()).hexdigest()
