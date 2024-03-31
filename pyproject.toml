@@ -26,6 +26,7 @@ python = '3.10'
 all = [
     "hatch run style:all",
     "hatch run test:all",
+    "hatch run docs:sphinx",
 ]
 
 [tool.hatch.envs.style]
@@ -51,3 +52,9 @@ all = ["pytest"]
 [tool.pytest.ini_options]
 addopts = "--no-header -W error --showlocals"
 log_level = "DEBUG"
+
+[tool.hatch.envs.docs]
+dependencies = ["sphinx", "sphinx-design"]
+
+[tool.hatch.envs.docs.scripts]
+sphinx = "make -C docs html"
