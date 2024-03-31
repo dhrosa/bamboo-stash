@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, ParamSpec, TypeVar, cast
 
 import pandas as pd
+from platformdirs import user_cache_path
 
 logger = logging.getLogger(__name__)
 
@@ -17,16 +18,34 @@ R = TypeVar("R")
 
 class Stash:
     base_dir: Path
+    """Base directory for storing cached data."""
 
-    def __init__(self, base_dir: Path) -> None:
+    def __init__(self, base_dir: Path | None = None) -> None:
+        """
+
+        :param base_dir: Directory for storing cached data. If the value is
+          :py:data:`None` (the default), an appropriate cache directory is
+          automatically chosen in the user's home directory. This automatically chosen
+          value can be seen using :py:attr:`Stash.base_dir`.
+
+        """
+        if base_dir is None:
+            base_dir = user_cache_path("bamboo-stash")
         self.base_dir = base_dir
+        logger.info(f"Data will be cached in {base_dir}")
 
     def __call__(self, f: Callable[P, R]) -> Callable[P, R]:
+        """Decorator to wrap a function with a caching function."""
         return stashed(self.base_dir, f)
 
 
 def stashed(base_dir: Path, f: Callable[P, R]) -> Callable[P, R]:
+    """Implementation of Stash decorator."""
+
     signature = inspect.signature(f)
+
+    # Parent folder for this function's data is computed from its name and
+    # source code.
     function_dir = base_dir / f.__qualname__ / digest_function(f)
 
     @wraps(f)

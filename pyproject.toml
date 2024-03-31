@@ -13,7 +13,7 @@ authors = [
 ]
 dynamic = ["version"]
 
-dependencies = ["pandas"]
+dependencies = ["pandas", "platformdirs"]
 
 [tool.hatch.version]
 path = "src/bamboo_stash/__init__.py"

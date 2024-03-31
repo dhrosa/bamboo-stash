@@ -18,6 +18,7 @@ extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx']
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
+autoclass_content = "both"
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
 
 # -- Options for HTML output -------------------------------------------------
