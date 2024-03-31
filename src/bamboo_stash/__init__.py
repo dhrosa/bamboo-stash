@@ -1,5 +1,5 @@
-from .cache import Cache
+from .stash import Stash
 
 VERSION = "0.0.0"
 
-__all__ = ["Cache"]
+__all__ = ["Stash"]

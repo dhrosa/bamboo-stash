@@ -5,18 +5,18 @@ from typing import cast
 from pandas import DataFrame, Series
 from pytest import fixture
 
-from bamboo_stash import Cache
+from bamboo_stash import Stash
 
 
 @fixture
-def cache(tmp_path: Path) -> Cache:
-    return Cache(tmp_path / "bamboo_stash")
+def stash(tmp_path: Path) -> Stash:
+    return Stash(tmp_path / "bamboo_stash")
 
 
-def test_no_args(cache: Cache) -> None:
+def test_no_args(stash: Stash) -> None:
     call_count = 0
 
-    @cache
+    @stash
     def f() -> int:
         nonlocal call_count
         call_count += 1
@@ -27,10 +27,10 @@ def test_no_args(cache: Cache) -> None:
     assert call_count == 1
 
 
-def test_args(cache: Cache) -> None:
+def test_args(stash: Stash) -> None:
     call_count = 0
 
-    @cache
+    @stash
     def f(a: int) -> int:
         nonlocal call_count
         call_count += 1
@@ -43,10 +43,10 @@ def test_args(cache: Cache) -> None:
     assert call_count == 2
 
 
-def test_cache_file_deletion(cache: Cache) -> None:
+def test_stash_file_deletion(stash: Stash) -> None:
     call_count = 0
 
-    @cache
+    @stash
     def f() -> int:
         nonlocal call_count
         call_count += 1
@@ -56,15 +56,15 @@ def test_cache_file_deletion(cache: Cache) -> None:
     assert f() == 4
     assert call_count == 1
 
-    rmtree(cache.base_dir)
+    rmtree(stash.base_dir)
     assert f() == 4
     assert call_count == 2
 
 
-def test_series_arg(cache: Cache) -> None:
+def test_series_arg(stash: Stash) -> None:
     call_count = 0
 
-    @cache
+    @stash
     def f(s: "Series[int]") -> int:
         nonlocal call_count
         call_count += 1
@@ -76,10 +76,10 @@ def test_series_arg(cache: Cache) -> None:
     assert call_count == 1
 
 
-def test_dataframe_arg(cache: Cache) -> None:
+def test_dataframe_arg(stash: Stash) -> None:
     call_count = 0
 
-    @cache
+    @stash
     def f(df: DataFrame) -> int:
         nonlocal call_count
         call_count += 1

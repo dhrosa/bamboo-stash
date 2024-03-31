@@ -15,17 +15,17 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
-class Cache:
+class Stash:
     base_dir: Path
 
     def __init__(self, base_dir: Path) -> None:
         self.base_dir = base_dir
 
     def __call__(self, f: Callable[P, R]) -> Callable[P, R]:
-        return cached(self.base_dir, f)
+        return stashed(self.base_dir, f)
 
 
-def cached(base_dir: Path, f: Callable[P, R]) -> Callable[P, R]:
+def stashed(base_dir: Path, f: Callable[P, R]) -> Callable[P, R]:
     signature = inspect.signature(f)
     function_dir = base_dir / f.__qualname__ / digest_function(f)
 
