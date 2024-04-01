@@ -120,3 +120,26 @@ def digest_args(binding: inspect.BoundArguments) -> str:
 def digest_function(f: Callable[P, R]) -> str:
     """Lossily condense function definition into a fixed-length string."""
     return hash_algorithm(inspect.getsource(f).encode()).hexdigest()
+
+
+def stash(f: Callable[P, R]) -> Callable[P, R]:
+    """Convenience decorator for when you don't care about where the cached data is stored.
+
+    The first time this function is called, this automatically creates a
+    :py:class:`Stash` object for you with default arguments. Subsequent calls
+    will re-use that object.
+
+    The automatically created :py:class:`Stash` object is intentionally hidden
+    from you. If you need to access attributes such as
+    :py:attr:`Stash.base_dir`, you should explicitly create a :py:class:`Stash`
+    object instead.
+
+    """
+    global default_stash
+    if default_stash is None:
+        default_stash = Stash()
+    return default_stash(f)
+
+
+default_stash: Stash | None = None
+"""Default-constructed Stash that is only initialized if stash() is called."""

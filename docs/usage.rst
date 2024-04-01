@@ -7,10 +7,8 @@ Basic Usage
 -----------
 
 .. code:: python
-          
-   from bamboo_stash import Stash
-          
-   stash = Stash()
+
+   from bamboo_stash import stash
 
    @stash
    def my_function():
@@ -26,8 +24,8 @@ also print the value of :py:attr:`Stash.base_dir` in your code.
 Advanced Usage
 --------------
 
-If you want to control exactly where the cached data is stored, you can pass an
-explicit directory name to :py:class:`Stash`:
+If you want to control exactly where the cached data is stored, you can
+explicitly instantiate a :py:class:`Stash` object and pass it a directory name:
 
 .. code:: python
 
@@ -38,4 +36,3 @@ explicit directory name to :py:class:`Stash`:
    @stash
    def my_function():
        ...
-   

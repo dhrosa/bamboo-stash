@@ -23,9 +23,7 @@ similar to :py:func:`functools.cache`. You can use it in a similar way:
 
       .. code:: python
 
-         from bamboo_stash import Stash
-
-         stash = Stash()
+         from bamboo_stash import stash
 
          @stash
          def my_function():
