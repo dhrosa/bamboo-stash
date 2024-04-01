@@ -1,9 +1,9 @@
 import inspect
-import logging
 import pickle
 from collections.abc import Callable
 from functools import update_wrapper
 from hashlib import sha256 as hash_algorithm
+from logging import getLogger
 from os import PathLike
 from pathlib import Path
 from shutil import rmtree
@@ -12,7 +12,7 @@ from typing import Any, Generic, ParamSpec, TypeVar, cast
 import pandas as pd
 from platformdirs import user_cache_path
 
-logger = logging.getLogger(__name__)
+logger = getLogger(__name__)
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -42,7 +42,7 @@ class StashedFunction(Generic[P, R]):
 
     def clear(self) -> None:
         """Delete all cached data for this function."""
-        logging.info(f"Deleting cached data for function {self.f.__qualname__}")
+        logger.info(f"Deleting cached data for function {self.f.__qualname__}")
         rmtree(self.function_dir)
 
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R:
@@ -52,7 +52,7 @@ class StashedFunction(Generic[P, R]):
         returns that result.
         """
         cache_path = self.path_for(*args, **kwargs)
-        logging.debug(f"Call to {self.f.__name__} will use cache path: {cache_path}")
+        logger.debug(f"Call to {self.f.__name__} will use cache path: {cache_path}")
         # Try fetching from cache.
         if cache_path.exists():
             return cast(R, load(cache_path))
@@ -86,6 +86,11 @@ class Stash:
             base_dir = user_cache_path("bamboo-stash")
         self.base_dir = Path(base_dir)
         logger.info(f"Data will be cached in {base_dir}")
+
+    def clear(self) -> None:
+        """Delete all cached data."""
+        logger.info(f"Deleting cached data in {self.base_dir}")
+        rmtree(self.base_dir)
 
     def __call__(self, f: Callable[P, R]) -> StashedFunction[P, R]:
         """Decorator to wrap a function to cache its calls.
