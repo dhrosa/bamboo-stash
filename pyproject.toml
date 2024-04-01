@@ -5,6 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "bamboo_stash"
 description = "Automatic caching for Pandas function pipelines."
+readme = "README.rst"
 requires-python = ">=3.10"
 license = "MIT"
 keywords = ["pandas"]
