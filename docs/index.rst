@@ -8,7 +8,7 @@ Overview
 similar to :py:func:`functools.cache`. You can use it in a similar way:
 
 .. grid:: 2
-          
+
    .. grid-item-card:: Using ``functools.cache``
 
       .. code:: python
@@ -56,6 +56,8 @@ on ``pandas``-based code in a Jupyter notebook. To support this, ``bamboo-stash`
 .. toctree::
    :caption: Contents:
 
+   installation
+   usage
    api
 
 

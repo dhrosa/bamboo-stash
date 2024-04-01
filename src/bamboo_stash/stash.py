@@ -4,6 +4,7 @@ import pickle
 from collections.abc import Callable
 from functools import wraps
 from hashlib import sha256 as hash_algorithm
+from os import PathLike
 from pathlib import Path
 from typing import Any, ParamSpec, TypeVar, cast
 
@@ -17,12 +18,16 @@ R = TypeVar("R")
 
 
 class Stash:
-    """An object that can be used to decorate functions to transparently cache its calls."""
+    """An object that can be used to decorate functions to transparently cache its calls.
+
+    If the chosen directory doesn't exist, it will be created (along with its
+    parents) the first time a function call is cached to disk.
+    """
 
     base_dir: Path
     """Base directory for storing cached data."""
 
-    def __init__(self, base_dir: Path | None = None) -> None:
+    def __init__(self, base_dir: PathLike[str] | None = None) -> None:
         """
 
         :param base_dir: Directory for storing cached data. If the value is
@@ -33,7 +38,7 @@ class Stash:
         """
         if base_dir is None:
             base_dir = user_cache_path("bamboo-stash")
-        self.base_dir = base_dir
+        self.base_dir = Path(base_dir)
         logger.info(f"Data will be cached in {base_dir}")
 
     def __call__(self, f: Callable[P, R]) -> Callable[P, R]:
