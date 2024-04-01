@@ -54,7 +54,7 @@ addopts = "--no-header -W error --showlocals"
 log_level = "DEBUG"
 
 [tool.hatch.envs.docs]
-dependencies = ["sphinx", "sphinx-design", 'pydata-sphinx-theme']
+dependencies = ["sphinx", 'pydata-sphinx-theme']
 
 [tool.hatch.envs.docs.scripts]
 sphinx = "make -C docs html"
