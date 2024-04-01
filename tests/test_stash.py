@@ -1,5 +1,5 @@
+from collections import Counter
 from pathlib import Path
-from shutil import rmtree
 from typing import cast
 
 from pandas import DataFrame, Series
@@ -29,23 +29,21 @@ def test_no_args(stash: Stash) -> None:
 
 
 def test_args(stash: Stash) -> None:
-    call_count = 0
+    call_counts = Counter[int]()
 
     @stash
     def f(a: int) -> int:
-        nonlocal call_count
-        call_count += 1
+        call_counts[a] += 1
         return a**2
 
     assert f(1) == 1
     assert f(2) == 4
     assert f(2) == 4
     assert f(1) == 1
-    assert call_count == 2
+    assert call_counts == {1: 1, 2: 1}
 
 
-def test_stash_file_deletion(stash: Stash) -> None:
-    """Deleting the cached file should force fallbacks to the original function."""
+def test_clear(stash: Stash) -> None:
     call_count = 0
 
     @stash
@@ -58,9 +56,29 @@ def test_stash_file_deletion(stash: Stash) -> None:
     assert f() == 4
     assert call_count == 1
 
-    rmtree(stash.base_dir)
+    f.clear()
+
     assert f() == 4
     assert call_count == 2
+
+
+def test_clear_for(stash: Stash) -> None:
+    call_counts = Counter[int]()
+
+    @stash
+    def f(a: int) -> int:
+        call_counts[a] += 1
+        return a
+
+    assert f(1) == 1
+    assert f(2) == 2
+    assert call_counts == {1: 1, 2: 1}
+
+    # Clear cached data for 1, but not 2. f(1) should be recomputed, but not f(2).
+    f.clear_for(1)
+    assert f(1) == 1
+    assert f(2) == 2
+    assert call_counts == {1: 2, 2: 1}
 
 
 def test_series_arg(stash: Stash) -> None:

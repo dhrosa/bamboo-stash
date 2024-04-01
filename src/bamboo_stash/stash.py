@@ -6,6 +6,7 @@ from functools import update_wrapper
 from hashlib import sha256 as hash_algorithm
 from os import PathLike
 from pathlib import Path
+from shutil import rmtree
 from typing import Any, Generic, ParamSpec, TypeVar, cast
 
 import pandas as pd
@@ -34,6 +35,15 @@ class StashedFunction(Generic[P, R]):
             self.signature.bind(*args, **kwargs)
         )
         return cache_path.with_suffix(".pickle")
+
+    def clear_for(self, *args: P.args, **kwargs: P.kwargs) -> None:
+        """Delete cached data (if any exists) for this specific set of arguments."""
+        self.path_for(*args, **kwargs).unlink(missing_ok=True)
+
+    def clear(self) -> None:
+        """Delete all cached data for this function."""
+        logging.info(f"Deleting cached data for function {self.f.__qualname__}")
+        rmtree(self.function_dir)
 
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R:
         """If a cached file for these arguments exist, returns the cached result.
