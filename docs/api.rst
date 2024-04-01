@@ -6,7 +6,9 @@ API
 .. autofunction:: stash
 
 .. autoclass:: Stash
+   :members:
+   :special-members: __call__
 
-   .. autoattribute:: base_dir
-
-   .. automethod:: __call__
+.. autoclass:: StashedFunction
+   :members:
+   :special-members: __call__

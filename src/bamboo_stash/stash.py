@@ -2,11 +2,11 @@ import inspect
 import logging
 import pickle
 from collections.abc import Callable
-from functools import wraps
+from functools import update_wrapper
 from hashlib import sha256 as hash_algorithm
 from os import PathLike
 from pathlib import Path
-from typing import Any, ParamSpec, TypeVar, cast
+from typing import Any, Generic, ParamSpec, TypeVar, cast
 
 import pandas as pd
 from platformdirs import user_cache_path
@@ -15,6 +15,42 @@ logger = logging.getLogger(__name__)
 
 P = ParamSpec("P")
 R = TypeVar("R")
+
+
+class StashedFunction(Generic[P, R]):
+    """Callable object that wraps your original function."""
+
+    def __init__(self, base_dir: Path, f: Callable[P, R]) -> None:
+        self.f = f
+        self.signature = inspect.signature(f)
+        # Parent folder for this function's data is computed from its name and
+        # source code.
+        self.function_dir = base_dir / f.__qualname__ / digest_function(f)
+        update_wrapper(self, f)
+
+    def path_for(self, *args: P.args, **kwargs: P.kwargs) -> Path:
+        """File where data for a function call with these arguments should be stored."""
+        cache_path = self.function_dir / digest_args(
+            self.signature.bind(*args, **kwargs)
+        )
+        return cache_path.with_suffix(".pickle")
+
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R:
+        """If a cached file for these arguments exist, returns the cached result.
+
+        Otherwise, calls the wrapped function, caches that result to a file, and
+        returns that result.
+        """
+        cache_path = self.path_for(*args, **kwargs)
+        logging.debug(f"Call to {self.f.__name__} will use cache path: {cache_path}")
+        # Try fetching from cache.
+        if cache_path.exists():
+            return cast(R, load(cache_path))
+        # Cache miss; fallback to actual function and cache the result
+        result = self.f(*args, **kwargs)
+        self.function_dir.mkdir(parents=True, exist_ok=True)
+        dump(result, cache_path)
+        return result
 
 
 class Stash:
@@ -41,7 +77,7 @@ class Stash:
         self.base_dir = Path(base_dir)
         logger.info(f"Data will be cached in {base_dir}")
 
-    def __call__(self, f: Callable[P, R]) -> Callable[P, R]:
+    def __call__(self, f: Callable[P, R]) -> StashedFunction[P, R]:
         """Decorator to wrap a function to cache its calls.
 
         You wouldn't call this method explicitly; this method exists to make the
@@ -58,34 +94,7 @@ class Stash:
          @stash  # <-- This line invokes stash.__call__
          def my_function(): ...
         """
-        return stashed(self.base_dir, f)
-
-
-def stashed(base_dir: Path, f: Callable[P, R]) -> Callable[P, R]:
-    """Implementation of Stash decorator."""
-
-    signature = inspect.signature(f)
-
-    # Parent folder for this function's data is computed from its name and
-    # source code.
-    function_dir = base_dir / f.__qualname__ / digest_function(f)
-
-    @wraps(f)
-    def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-        # Path for this specific file is computed from the arguments.
-        cache_path = function_dir / digest_args(signature.bind(*args, **kwargs))
-        cache_path = cache_path.with_suffix(".pickle")
-        logging.debug(f"Call to {f.__name__} will use cache path: {cache_path}")
-        # Try fetching from cache.
-        if cache_path.exists():
-            return cast(R, load(cache_path))
-        # Cache miss; fallback to actual function and cache the result
-        result = f(*args, **kwargs)
-        function_dir.mkdir(parents=True, exist_ok=True)
-        dump(result, cache_path)
-        return result
-
-    return wrapper
+        return StashedFunction(self.base_dir, f)
 
 
 def load(path: Path) -> Any:
@@ -122,7 +131,7 @@ def digest_function(f: Callable[P, R]) -> str:
     return hash_algorithm(inspect.getsource(f).encode()).hexdigest()
 
 
-def stash(f: Callable[P, R]) -> Callable[P, R]:
+def stash(f: Callable[P, R]) -> StashedFunction[P, R]:
     """Convenience decorator for when you don't care about where the cached data is stored.
 
     The first time this function is called, this automatically creates a
