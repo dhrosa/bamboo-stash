@@ -1,9 +1,9 @@
-import hashlib
 import inspect
 import logging
 import pickle
 from collections.abc import Callable
 from functools import wraps
+from hashlib import sha256 as hash_algorithm
 from pathlib import Path
 from typing import Any, ParamSpec, TypeVar, cast
 
@@ -17,6 +17,8 @@ R = TypeVar("R")
 
 
 class Stash:
+    """An object that can be used to decorate functions to transparently cache its calls."""
+
     base_dir: Path
     """Base directory for storing cached data."""
 
@@ -35,7 +37,22 @@ class Stash:
         logger.info(f"Data will be cached in {base_dir}")
 
     def __call__(self, f: Callable[P, R]) -> Callable[P, R]:
-        """Decorator to wrap a function with a caching function."""
+        """Decorator to wrap a function to cache its calls.
+
+        You wouldn't call this method explicitly; this method exists to make the
+        :py:class:`Stash` object itself callable as a decorator.
+
+        For example:
+
+        .. code:: python
+
+         from bamboo_stash import Stash
+
+         stash = Stash()
+
+         @stash  # <-- This line invokes stash.__call__
+         def my_function(): ...
+        """
         return stashed(self.base_dir, f)
 
 
@@ -49,18 +66,21 @@ def stashed(base_dir: Path, f: Callable[P, R]) -> Callable[P, R]:
     function_dir = base_dir / f.__qualname__ / digest_function(f)
 
     @wraps(f)
-    def inner(*args: P.args, **kwargs: P.kwargs) -> R:
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+        # Path for this specific file is computed from the arguments.
         cache_path = function_dir / digest_args(signature.bind(*args, **kwargs))
+        cache_path = cache_path.with_suffix(".pickle")
         logging.debug(f"Call to {f.__name__} will use cache path: {cache_path}")
+        # Try fetching from cache.
         if cache_path.exists():
             return cast(R, load(cache_path))
-        # Fallback to actual function and cache the result
+        # Cache miss; fallback to actual function and cache the result
         result = f(*args, **kwargs)
         function_dir.mkdir(parents=True, exist_ok=True)
         dump(result, cache_path)
         return result
 
-    return inner
+    return wrapper
 
 
 def load(path: Path) -> Any:
@@ -85,7 +105,7 @@ def arg_to_bytes(x: Any) -> bytes:
 
 def digest_args(binding: inspect.BoundArguments) -> str:
     """Lossily condense function arguments to a fixed-length string."""
-    h = hashlib.sha256()
+    h = hash_algorithm()
     for name, value in sorted(binding.arguments.items(), key=lambda x: x[0]):
         h.update(name.encode())
         h.update(arg_to_bytes(value))
@@ -94,4 +114,4 @@ def digest_args(binding: inspect.BoundArguments) -> str:
 
 def digest_function(f: Callable[P, R]) -> str:
     """Lossily condense function definition into a fixed-length string."""
-    return hashlib.sha256(inspect.getsource(f).encode()).hexdigest()
+    return hash_algorithm(inspect.getsource(f).encode()).hexdigest()

@@ -10,6 +10,7 @@ from bamboo_stash import Stash
 
 @fixture
 def stash(tmp_path: Path) -> Stash:
+    """Fixture to create a Stash based in a temporary directory."""
     return Stash(tmp_path / "bamboo_stash")
 
 
@@ -44,6 +45,7 @@ def test_args(stash: Stash) -> None:
 
 
 def test_stash_file_deletion(stash: Stash) -> None:
+    """Deleting the cached file should force fallbacks to the original function."""
     call_count = 0
 
     @stash
