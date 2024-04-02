@@ -16,6 +16,10 @@ dynamic = ["version"]
 
 dependencies = ["pandas", "platformdirs"]
 
+[project.urls]
+Documentation = "https://bamboo-stash.readthedocs.io"
+Repository = "https://github.com/dhrosa/bamboo-stash"
+
 [tool.hatch.version]
 path = "src/bamboo_stash/__init__.py"
 

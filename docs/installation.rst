@@ -1,10 +1,21 @@
 Installation
 ============
 
-This package is not yet released on PyPI. You can still install it using ``pip``
-by specifying the GitHub repository as the source:
+PyPI
+----
+
+``bamboo-stash`` is available on PyPI at https://pypi.org/project/bamboo-stash/ and is installable via ``pip``:
 
 .. code:: shell
 
-   pip install git+https://github.com/dhrosa/bamboo_stash
+   pip install bamboo-stash
+
+GitHub
+------
+
+You can also install the newest version directly from GitHub:
+
+.. code:: shell
+
+   pip install git+https://github.com/dhrosa/bamboo-stash
 
