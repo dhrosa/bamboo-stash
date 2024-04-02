@@ -3,7 +3,7 @@ API
 
 .. automodule:: bamboo_stash
 
-.. autofunction:: stash
+.. autodecorator:: stash
 
 .. autoclass:: Stash
    :members:
