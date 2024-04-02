@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "bamboo_stash"
+name = "bamboo-stash"
 description = "Automatic caching for Pandas function pipelines."
 readme = "README.rst"
 requires-python = ">=3.10"
